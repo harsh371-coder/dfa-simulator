@@ -1,0 +1,45 @@
+name: CI / Automated Automata Verification
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Build & Verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Compile C++ Simulator (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          g++ -std=c++14 -O2 backend/simulator.cpp -o backend/simulator
+          chmod +x backend/simulator
+
+      - name: Compile C++ Simulator (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          g++ -std=c++14 -O2 backend\simulator.cpp -o backend\simulator.exe
+
+      - name: Run Simulator Unit Tests
+        run: python -m unittest tests/test_simulator.py
+
+      - name: Verify All Automata Presets
+        run: python tests/test_all_presets.py
+
+      - name: Run Server API Tests
+        run: python tests/test_server.py

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: epsilon-nfa-to-dfa-simulator
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: Dockerfile
+    healthCheckPath: /api/health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: PORT
+        value: 8080

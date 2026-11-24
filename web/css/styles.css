@@ -1,0 +1,117 @@
+/* Modern, Clean & Textbook-Accurate Automata Visualizer Styling */
+
+:root {
+    --primary: #ea580c;
+    --primary-hover: #c2410c;
+    --primary-light: #fff7ed;
+    --surface-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --border-subtle: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --accent-green: #10b981;
+    --accent-purple: #7c3aed;
+}
+
+body {
+    background-color: var(--surface-bg);
+    color: var(--text-main);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* SVG Automata Canvas Styling */
+.automata-node {
+    user-select: none;
+    transition: transform 0.15s ease;
+}
+
+.automata-node:hover circle:first-of-type {
+    stroke: #ea580c !important;
+    stroke-width: 3.2px !important;
+}
+
+.halo-pulse {
+    animation: haloPulseAnim 1.8s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes haloPulseAnim {
+    0% {
+        r: 28px;
+        opacity: 0.9;
+        stroke-width: 3px;
+    }
+    50% {
+        r: 37px;
+        opacity: 0.35;
+        stroke-width: 1.5px;
+    }
+    100% {
+        r: 28px;
+        opacity: 0.9;
+        stroke-width: 3px;
+    }
+}
+
+.transition-edge {
+    pointer-events: none;
+}
+
+.edge-active line,
+.edge-active path {
+    stroke: #ea580c !important;
+    stroke-width: 3.5px !important;
+    filter: drop-shadow(0 0 3px rgba(234, 88, 12, 0.5));
+}
+
+/* Range input / Scrubber */
+input[type="range"] {
+    accent-color: #ea580c;
+}
+
+/* Tab active button */
+.tab-btn.active {
+    background-color: #ea580c !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(234, 88, 12, 0.3);
+}
+
+.table-tab-btn.active {
+    border-bottom: 2px solid #ea580c;
+    color: #ea580c !important;
+    font-weight: 700;
+}
+
+/* Crisp Clean Card Shadow */
+.clean-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Pulse animation for engine badge */
+@keyframes engineGlow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.08); }
+}
+.engine-glow {
+    animation: engineGlow 2.5s infinite ease-in-out;
+}

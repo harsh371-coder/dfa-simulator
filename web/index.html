@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ε-NFA to DFA Simulator | Pure Textbook Visualizer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans antialiased">
+
+    <!-- Top Navigation & Brand Header -->
+    <header class="bg-white border-b border-slate-200 px-6 py-3.5 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-[1720px] mx-auto flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Logo & Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center font-mono font-bold text-white text-lg shadow-sm">
+                    ε→D
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-bold text-lg text-slate-900 tracking-tight">ε-NFA to DFA Simulator</h1>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 engine-glow"></span>
+                            C++ Native Engine
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500">Formal Subset Construction, 100% Straight Line Textbook Diagrams &amp; Smooth Slow Animation</p>
+                </div>
+            </div>
+
+            <!-- Top Actions: Presets & Primary Action -->
+            <div class="flex items-center flex-wrap gap-3">
+                <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-lg border border-slate-200 text-xs">
+                    <label for="preset-select" class="font-semibold text-slate-600 px-1">Preset:</label>
+                    <select id="preset-select" class="bg-white border border-slate-300 text-slate-800 font-medium text-xs rounded-md px-3 py-1.5 focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
+                <button id="btn-run" class="flex items-center gap-2 px-5 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition active:scale-95">
+                    <span>⚡ Convert &amp; Animate</span>
+                </button>
+
+                <button id="btn-reset" class="px-3.5 py-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-medium transition" title="Reset to default example">
+                    Reset
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Quick Preset Buttons (1-Click Instant Load) -->
+    <div class="bg-white border-b border-slate-200 px-6 py-2.5 overflow-x-auto shadow-xs">
+        <div class="max-w-[1720px] mx-auto flex items-center gap-2 text-xs">
+            <span class="text-slate-500 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap mr-1">Quick Presets:</span>
+            <button class="quick-preset-chip px-3 py-1.5 rounded-full bg-orange-50 border border-orange-300 text-orange-800 hover:bg-orange-100 font-semibold transition whitespace-nowrap shadow-xs" data-preset="reference_textbook">
+                ⭐ Uploaded Reference Image Automaton
+            </button>
+            <button class="quick-preset-chip px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-medium transition whitespace-nowrap" data-preset="ends_with_abb">
+                (a|b)*abb — Ends with 'abb'
+            </button>
+            <button class="quick-preset-chip px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-medium transition whitespace-nowrap" data-preset="binary_ends_01">
+                (0|1)*01 — Binary Ends '01'
+            </button>
+            <button class="quick-preset-chip px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-medium transition whitespace-nowrap" data-preset="cascading_epsilon">
+                Cascading ε-Chains
+            </button>
+            <button class="quick-preset-chip px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-medium transition whitespace-nowrap" data-preset="cyclic_epsilon">
+                Cyclic ε-Loop
+            </button>
+            <button class="quick-preset-chip px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-medium transition whitespace-nowrap" data-preset="empty_string_accepted">
+                Empty String ε Accepted
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN SIDE-BY-SIDE CONTENT -->
+    <main class="flex-1 max-w-[1720px] w-full mx-auto p-4 sm:p-6 space-y-6">
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- LEFT PANE: Clean, Simple Input & String Tester (~40% width) -->
+            <div class="lg:col-span-5 xl:col-span-4 space-y-5">
+
+                <!-- 1. Automata Configuration Card -->
+                <div class="clean-card p-5 space-y-4">
+                    <div class="border-b border-slate-200 pb-3">
+                        <div class="flex items-center justify-between">
+                            <h2 class="font-bold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-orange-600"></span>
+                                1. Configure ε-NFA
+                            </h2>
+                            <span class="text-xs text-slate-500 font-medium">Input Automaton</span>
+                        </div>
+                        <p id="preset-description" class="text-xs text-slate-600 mt-1">Configure states, alphabet, and transitions below.</p>
+                    </div>
+
+                    <!-- States & Alphabet -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">States (Q):</label>
+                            <input id="input-states" type="text" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 font-mono font-medium focus:bg-white focus:border-orange-500 focus:outline-none" placeholder="q0, q1, qf">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Alphabet (Σ):</label>
+                            <input id="input-alphabet" type="text" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 font-mono font-medium focus:bg-white focus:border-orange-500 focus:outline-none" placeholder="a, b">
+                        </div>
+                    </div>
+
+                    <!-- Start State & Dead State -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Start State (q₀):</label>
+                            <select id="select-start-state" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 font-mono font-medium focus:bg-white focus:border-orange-500 focus:outline-none"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Dead / Trap State:</label>
+                            <label class="flex items-center gap-2 h-[34px] px-2.5 bg-slate-50 border border-slate-300 rounded-lg cursor-pointer text-xs text-slate-700 hover:bg-slate-100 transition">
+                                <input id="check-dead-state" type="checkbox" checked class="w-4 h-4 text-orange-600 rounded border-slate-300 cursor-pointer">
+                                <span class="font-medium">Include State (D)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Final / Accepting States -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-xs font-semibold text-slate-700 uppercase">Final States (F):</label>
+                            <span class="text-[11px] text-slate-500">Click to toggle (Double Circle)</span>
+                        </div>
+                        <div id="accept-states-chips" class="flex flex-wrap gap-1.5 p-2 bg-slate-50 border border-slate-300 rounded-lg min-h-[38px] items-center"></div>
+                    </div>
+
+                    <!-- Transitions Builder -->
+                    <div class="border-t border-slate-200 pt-3 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-semibold text-slate-700 uppercase">Transitions (δ):</label>
+                            <span class="text-[11px] text-slate-500">From ➔ Symbol ➔ To</span>
+                        </div>
+
+                        <!-- Add Row Form -->
+                        <div class="grid grid-cols-12 gap-1.5 bg-slate-100 p-2 rounded-lg border border-slate-200">
+                            <div class="col-span-4">
+                                <input id="new-trans-from" type="text" class="w-full bg-white border border-slate-300 rounded px-2.5 py-1 text-xs font-mono text-slate-900" placeholder="From (q0)">
+                            </div>
+                            <div class="col-span-4 flex items-center gap-1">
+                                <input id="new-trans-symbol" type="text" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs font-mono text-slate-900 text-center font-bold" placeholder="Sym (a)">
+                                <button id="builder-quick-eps" type="button" class="px-2 py-1 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-purple-700 font-mono text-xs rounded font-bold transition" title="Insert ε">ε</button>
+                            </div>
+                            <div class="col-span-4">
+                                <input id="new-trans-to" type="text" class="w-full bg-white border border-slate-300 rounded px-2.5 py-1 text-xs font-mono text-slate-900" placeholder="To (q1)">
+                            </div>
+                            <div class="col-span-12 mt-1">
+                                <button id="btn-add-transition" type="button" class="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded transition flex items-center justify-center gap-1">
+                                    <span>+ Add Transition</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Current Transitions List -->
+                        <div class="max-h-44 overflow-y-auto rounded-lg border border-slate-200 bg-white">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-100 text-slate-600 font-semibold sticky top-0 border-b border-slate-200">
+                                    <tr>
+                                        <th class="py-1.5 px-3">From</th>
+                                        <th class="py-1.5 px-2 text-center">Symbol</th>
+                                        <th class="py-1.5 px-3">To</th>
+                                        <th class="py-1.5 px-2 text-right">Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transitions-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Convert Action Button -->
+                    <button onclick="document.getElementById('btn-run').click()" class="w-full py-2.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition active:scale-98 flex items-center justify-center gap-2">
+                        <span>⚡ Convert ε-NFA to DFA</span>
+                    </button>
+                </div>
+
+                <!-- 2. Test String Acceptance Card -->
+                <div class="clean-card p-5 space-y-3">
+                    <div class="border-b border-slate-200 pb-2">
+                        <h2 class="font-bold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                            2. Test String Acceptance
+                        </h2>
+                        <p class="text-xs text-slate-500">Test if a string is accepted by the generated DFA.</p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <input id="single-string-input" type="text" class="flex-1 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 font-mono text-xs text-slate-900 font-bold focus:bg-white focus:outline-none focus:border-orange-500" placeholder="Type string (e.g. aba, or blank for ε)">
+                        <button id="btn-test-string" class="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold transition">
+                            Test
+                        </button>
+                    </div>
+
+                    <!-- Result Box -->
+                    <div id="test-verdict-box" class="hidden p-3 rounded-lg text-xs font-mono font-medium border"></div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT PANE: Textbook Diagram Canvas & Slow Building Animation (~60% width) -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-4">
+
+                <!-- Animation Bar & View Selector Card -->
+                <div class="clean-card p-4 space-y-3">
+                    
+                    <!-- Diagram Mode Tabs -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+                        <div class="flex items-center gap-1.5">
+                            <button id="tab-btn-dfa" class="tab-btn active px-3.5 py-1.5 rounded-lg bg-orange-600 text-white font-bold text-xs uppercase tracking-wider transition">
+                                Converted DFA
+                            </button>
+                            <button id="tab-btn-nfa" class="tab-btn px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider transition">
+                                Original ε-NFA
+                            </button>
+                            <button id="tab-btn-mindfa" class="tab-btn px-3.5 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-xs uppercase tracking-wider transition">
+                                ✨ Minimized DFA
+                            </button>
+                            <button id="tab-btn-side" class="tab-btn px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold transition">
+                                Compare Dual View
+                            </button>
+                        </div>
+
+                        <div class="text-xs text-slate-500 font-medium hidden sm:block">
+                            Drag states to adjust • Wheel to zoom
+                        </div>
+                    </div>
+
+                    <!-- Animation Player Controls -->
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <!-- Playback Controls -->
+                        <div class="flex items-center gap-1">
+                            <button id="anim-reset" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200" title="Reset to Step 0">
+                                ⏮ Reset
+                            </button>
+                            <button id="anim-prev" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200">
+                                ◀ Prev
+                            </button>
+                            <button id="anim-play" class="px-4 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider shadow-xs transition">
+                                ▶ Play
+                            </button>
+                            <button id="anim-next" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200">
+                                Next ▶
+                            </button>
+                            <button id="anim-skip" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200" title="Skip to End">
+                                ⏭ End
+                            </button>
+                        </div>
+
+                        <!-- Scrubber & Step Display -->
+                        <div class="flex-1 min-w-[160px] flex items-center gap-2">
+                            <span id="anim-step-counter" class="text-xs font-mono font-bold text-orange-600 whitespace-nowrap">Step 1 / 1</span>
+                            <input id="anim-scrubber" type="range" min="0" max="0" value="0" class="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                        </div>
+
+                        <!-- Speed selector -->
+                        <div class="flex items-center gap-1.5 text-xs text-slate-600">
+                            <span class="font-semibold">Speed:</span>
+                            <select id="anim-speed" class="bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-md px-2 py-1 font-medium focus:outline-none">
+                                <option value="3500">Very Slow (3.5s)</option>
+                                <option value="2500" selected>Slow (2.5s)</option>
+                                <option value="1500">Normal (1.5s)</option>
+                                <option value="800">Fast (0.8s)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Live Step Explanation Box -->
+                    <div id="anim-hud-content" class="bg-amber-50/70 border border-amber-200/80 p-3 rounded-lg text-xs leading-relaxed text-amber-950">
+                        Click <b>"Play (Slow)"</b> or <b>"Next"</b> to watch the DFA construction unfold step-by-step.
+                    </div>
+                </div>
+
+                <!-- THE FORMAL TEXTBOOK CANVAS (Pure White, 100% Straight Lines, Double Circles, Red Caption) -->
+                <div id="diagram-view-wrapper" class="bg-white border-2 border-slate-300 rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col items-center">
+
+                    <!-- Canvas 1: Converted DFA -->
+                    <div id="container-dfa" class="w-full flex flex-col items-center">
+                        <div class="w-full relative">
+                            <svg id="svg-dfa" class="w-full h-[460px] bg-white cursor-grab active:cursor-grabbing outline-none"></svg>
+                            <div class="absolute top-3 right-3 flex items-center gap-1 bg-white/90 border border-slate-300 rounded-md p-1 shadow-xs">
+                                <button type="button" class="px-2 py-0.5 text-xs font-bold text-slate-700 hover:bg-orange-600 hover:text-white rounded transition" onclick="window.dfaApp.dfaRenderer.zoomAt(1.2, 300, 200)">+</button>
+                                <button type="button" class="px-2 py-0.5 text-xs font-bold text-slate-700 hover:bg-orange-600 hover:text-white rounded transition" onclick="window.dfaApp.dfaRenderer.zoomAt(0.8, 300, 200)">−</button>
+                                <button type="button" class="px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-orange-600 hover:text-white rounded transition" onclick="window.dfaApp.dfaRenderer.resetView()">Fit</button>
+                            </div>
+                        </div>
+                        <div class="text-center font-bold text-red-700 text-lg tracking-wider font-mono mt-1">DFA</div>
+                    </div>
+
+                    <!-- Canvas 2: Original ε-NFA -->
+                    <div id="container-nfa" class="w-full flex flex-col items-center hidden">
+                        <div class="w-full relative">
+                            <svg id="svg-nfa" class="w-full h-[460px] bg-white cursor-grab active:cursor-grabbing outline-none"></svg>
+                            <div class="absolute top-3 right-3 flex items-center gap-1 bg-white/90 border border-slate-300 rounded-md p-1 shadow-xs">
+                                <button type="button" class="px-2 py-0.5 text-xs font-bold text-slate-700 hover:bg-orange-600 hover:text-white rounded transition" onclick="window.dfaApp.nfaRenderer.zoomAt(1.2, 300, 200)">+</button>
+                                <button type="button" class="px-2 py-0.5 text-xs font-bold text-slate-700 hover:bg-orange-600 hover:text-white rounded transition" onclick="window.dfaApp.nfaRenderer.zoomAt(0.8, 300, 200)">−</button>
+                                <button type="button" class="px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-orange-600 hover:text-white rounded transition" onclick="window.dfaApp.nfaRenderer.resetView()">Fit</button>
+                            </div>
+                        </div>
+                        <div class="text-center font-bold text-red-700 text-lg tracking-wider font-mono mt-1">ε-NFA</div>
+                    </div>
+
+                    <!-- Canvas 3: Minimized DFA -->
+                    <div id="container-mindfa" class="w-full flex flex-col items-center hidden">
+                        <div class="w-full relative">
+                            <svg id="svg-mindfa" class="w-full h-[460px] bg-white cursor-grab active:cursor-grabbing outline-none"></svg>
+                            <div class="absolute top-3 right-3 flex items-center gap-1 bg-white/90 border border-slate-300 rounded-md p-1 shadow-xs">
+                                <button type="button" class="px-2 py-0.5 text-xs font-bold text-slate-700 hover:bg-orange-600 hover:text-white rounded transition" onclick="window.dfaApp.minDfaRenderer.zoomAt(1.2, 300, 200)">+</button>
+                                <button type="button" class="px-2 py-0.5 text-xs font-bold text-slate-700 hover:bg-orange-600 hover:text-white rounded transition" onclick="window.dfaApp.minDfaRenderer.zoomAt(0.8, 300, 200)">−</button>
+                                <button type="button" class="px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-orange-600 hover:text-white rounded transition" onclick="window.dfaApp.minDfaRenderer.resetView()">Fit</button>
+                            </div>
+                        </div>
+                        <div class="text-center font-bold text-red-700 text-lg tracking-wider font-mono mt-1">MINIMIZED DFA</div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- LOWER SECTION: ORGANIZED TRANSITION TABLES (Clean Tabbed View) -->
+        <div class="clean-card p-5 space-y-4">
+            
+            <div class="border-b border-slate-200 pb-3 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h2 class="font-bold text-base text-slate-900">Transition Tables &amp; Formal Powerset Traces</h2>
+                    <p class="text-xs text-slate-500">Formally computed subsets and transition functions.</p>
+                </div>
+
+                <!-- Table Switcher Tabs -->
+                <div class="flex items-center gap-1 overflow-x-auto text-xs">
+                    <button id="table-tab-dfa" class="table-tab-btn active px-3 py-1.5 text-slate-700 hover:text-orange-600 font-semibold transition whitespace-nowrap">
+                        1. DFA Table
+                    </button>
+                    <button id="table-tab-steps" class="table-tab-btn px-3 py-1.5 text-slate-500 hover:text-orange-600 font-medium transition whitespace-nowrap">
+                        2. Step-by-Step Trace (Interactive)
+                    </button>
+                    <button id="table-tab-closures" class="table-tab-btn px-3 py-1.5 text-slate-500 hover:text-orange-600 font-medium transition whitespace-nowrap">
+                        3. ε-Closures
+                    </button>
+                    <button id="table-tab-nfa" class="table-tab-btn px-3 py-1.5 text-slate-500 hover:text-orange-600 font-medium transition whitespace-nowrap">
+                        4. Original ε-NFA Table
+                    </button>
+                    <button id="table-tab-mindfa" class="table-tab-btn px-3 py-1.5 text-slate-500 hover:text-orange-600 font-medium transition whitespace-nowrap">
+                        5. Minimized DFA &amp; Partitions
+                    </button>
+                    <button id="table-tab-batch" class="table-tab-btn px-3 py-1.5 text-slate-500 hover:text-orange-600 font-medium transition whitespace-nowrap">
+                        6. Batch String Suite
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content 1: Converted DFA Table -->
+            <div id="table-panel-dfa" class="table-panel space-y-2">
+                <h3 class="font-bold text-xs uppercase tracking-wider text-slate-700">Converted DFA Transition Table:</h3>
+                <div class="overflow-x-auto rounded-lg border border-slate-200">
+                    <table class="w-full text-left text-xs">
+                        <thead id="table-dfa-thead" class="bg-slate-100 border-b border-slate-200 text-slate-600 font-semibold"></thead>
+                        <tbody id="table-dfa-tbody" class="bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab Content 2: Step-by-Step Construction Trace -->
+            <div id="table-panel-steps" class="table-panel space-y-2 hidden">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-orange-600">
+                        Step-by-Step Subset Construction Trace:
+                    </h3>
+                    <span class="text-[11px] text-slate-500">💡 Click any row to jump the diagram directly to that step!</span>
+                </div>
+                <div class="overflow-x-auto max-h-[420px] rounded-lg border border-slate-200">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 sticky top-0 font-semibold">
+                            <tr>
+                                <th class="py-2.5 px-3">Step</th>
+                                <th class="py-2.5 px-3">DFA State (S)</th>
+                                <th class="py-2.5 px-3 text-center text-orange-600">Symbol (a)</th>
+                                <th class="py-2.5 px-3">move(S, a)</th>
+                                <th class="py-2.5 px-3 text-purple-700">ε-closure(move)</th>
+                                <th class="py-2.5 px-3 text-emerald-700">Target DFA State</th>
+                                <th class="py-2.5 px-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-steps-tbody" class="bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab Content 3: Epsilon Closures -->
+            <div id="table-panel-closures" class="table-panel space-y-2 hidden">
+                <h3 class="font-bold text-xs uppercase tracking-wider text-purple-700">ε-Closure for Every NFA State:</h3>
+                <div class="overflow-x-auto rounded-lg border border-slate-200">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-semibold">
+                            <tr>
+                                <th class="py-2 px-3 w-1/4">State (q)</th>
+                                <th class="py-2 px-3">ε-Closure: ε-closure(q)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-closures-tbody" class="bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab Content 4: Original ε-NFA Table -->
+            <div id="table-panel-nfa" class="table-panel space-y-2 hidden">
+                <h3 class="font-bold text-xs uppercase tracking-wider text-slate-700">Original ε-NFA Transition Table:</h3>
+                <div class="overflow-x-auto rounded-lg border border-slate-200">
+                    <table class="w-full text-left text-xs">
+                        <thead id="table-nfa-thead" class="bg-slate-100 border-b border-slate-200 text-slate-600 font-semibold"></thead>
+                        <tbody id="table-nfa-tbody" class="bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab Content 5: Minimized DFA Table & Partitions -->
+            <div id="table-panel-mindfa" class="table-panel space-y-3 hidden">
+                <h3 class="font-bold text-xs uppercase tracking-wider text-purple-700">✨ Minimized DFA Transition Table (Hopcroft Equivalence Partitioning):</h3>
+                <div id="mindfa-log-box" class="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 max-h-32 overflow-y-auto space-y-1"></div>
+                <div class="overflow-x-auto rounded-lg border border-slate-200">
+                    <table class="w-full text-left text-xs">
+                        <thead id="table-mindfa-thead" class="bg-slate-100 border-b border-slate-200 text-slate-600 font-semibold"></thead>
+                        <tbody id="table-mindfa-tbody" class="bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab Content 6: Batch Strings Suite -->
+            <div id="table-panel-batch" class="table-panel space-y-3 hidden">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-slate-700">Batch String Acceptance Suite:</h3>
+                    <button id="btn-batch-test" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-xs font-semibold text-white transition">
+                        Run Batch Test
+                    </button>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Comma-separated test strings:</label>
+                    <input id="input-test-strings" type="text" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 font-mono font-medium focus:bg-white focus:outline-none" placeholder="a, ab, aba, b, ba, ε">
+                </div>
+                <div class="overflow-x-auto rounded-lg border border-slate-200">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-semibold">
+                            <tr>
+                                <th class="py-2 px-3">Input String</th>
+                                <th class="py-2 px-3">Verdict</th>
+                                <th class="py-2 px-3">Automata Agreement</th>
+                            </tr>
+                        </thead>
+                        <tbody id="string-tests-tbody" class="bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- App Scripts -->
+    <script src="js/presets.js"></script>
+    <script src="js/svg_renderer.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
